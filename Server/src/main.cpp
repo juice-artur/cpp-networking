@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+#include "pqxx/pqxx"
+
 #pragma comment(lib, "ws2_32.lib")
 
 struct ClientInfo {
@@ -18,7 +20,7 @@ void addClient(sockaddr_in clientAddr, int addrLen) {
   for (const auto& client : clients) {
     if (client.addr.sin_addr.s_addr == clientAddr.sin_addr.s_addr &&
         client.addr.sin_port == clientAddr.sin_port) {
-      return; 
+      return;
     }
   }
   clients.push_back({clientAddr, addrLen});
@@ -40,6 +42,21 @@ void broadcastMessage(SOCKET serverSocket, char* message, int msgLen,
 }
 
 int main() {
+  pqxx::connection conn(
+      "host=localhost port=5432 dbname=db user=user password=pass");
+
+  if (conn.is_open()) {
+    std::cout << "Connected to database: " << conn.dbname() << std::endl;
+    pqxx::work txn(conn);
+    pqxx::result res = txn.exec("SELECT version();");
+    txn.commit();
+
+    // Вивід результату
+    for (auto row : res) {
+      std::cout << "PostgreSQL version: " << row[0].c_str() << std::endl;
+    }
+  }
+
   WSADATA wsaData;
   SOCKET serverSocket;
   sockaddr_in serverAddr, clientAddr;
@@ -86,7 +103,6 @@ int main() {
     inet_ntop(AF_INET, &clientAddr.sin_addr, ipStr, INET_ADDRSTRLEN);
     std::cout << "reseived from" << ipStr << ":" << ntohs(clientAddr.sin_port)
               << " - " << buffer << "\n";
-
 
     broadcastMessage(serverSocket, buffer, recvLen, clientAddr);
   }
