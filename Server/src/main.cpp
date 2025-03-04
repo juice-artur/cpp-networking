@@ -49,6 +49,7 @@ int main() {
   pqxx::connection conn(dbConnSetting);
 
   DatabaseMigrator migrator(dbConnSetting);
+  migrator.ApplyMigrations();
 
   if (conn.is_open()) {
     std::cout << "Connected to database: " << conn.dbname() << std::endl;

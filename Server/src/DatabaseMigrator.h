@@ -10,6 +10,8 @@ class DatabaseMigrator {
 
   void InitMigrationsTable();
 
+  void ApplyMigrations();
+
  private: 
       pqxx::connection conn;
 
