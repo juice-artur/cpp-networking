@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 
+#include "DatabaseMigrator.h"
 #include "pqxx/pqxx"
 
 #pragma comment(lib, "ws2_32.lib")
@@ -42,8 +43,12 @@ void broadcastMessage(SOCKET serverSocket, char* message, int msgLen,
 }
 
 int main() {
-  pqxx::connection conn(
-      "host=localhost port=5432 dbname=db user=user password=pass");
+  std::string dbConnSetting =
+      "host=localhost port=5432 dbname=db user=user password=pass";
+
+  pqxx::connection conn(dbConnSetting);
+
+  DatabaseMigrator migrator(dbConnSetting);
 
   if (conn.is_open()) {
     std::cout << "Connected to database: " << conn.dbname() << std::endl;
@@ -51,7 +56,6 @@ int main() {
     pqxx::result res = txn.exec("SELECT version();");
     txn.commit();
 
-    // Вивід результату
     for (auto row : res) {
       std::cout << "PostgreSQL version: " << row[0].c_str() << std::endl;
     }
